@@ -27,123 +27,90 @@ interface StatisticsChartsProps {
 }
 
 export function StatisticsCharts({ gameData }: StatisticsChartsProps) {
-  const teamA = gameData.teams[0];
-  const teamB = gameData.teams[1];
-  const summaryA = gameData.summary[teamA.id];
-  const summaryB = gameData.summary[teamB.id];
+  const team = gameData.teams[0]; // Single team from backend
+  const summary = gameData.summary[team.id];
 
-  // Enhanced data processing
-  const eventTypeCounts = gameData.events.reduce((acc, event) => {
-    acc[event.type] = (acc[event.type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  // Score data processing for backend results
+  const scoreEvents = gameData.events.filter((event) => event.type === "score");
 
-  const teamEventCounts = gameData.events.reduce((acc, event) => {
-    const team = gameData.teams.find((t) => t.id === event.teamId);
-    if (!team) return acc;
+  // Score distribution over time (cumulative)
+  const scoreProgression = scoreEvents
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .map((event, index) => ({
+      timestamp: event.timestamp,
+      cumulativeScores: index + 1,
+      confidence: event.confidence,
+      timeFormatted: formatTime(event.timestamp),
+    }));
 
-    if (!acc[team.label]) {
-      acc[team.label] = {};
-    }
-    acc[team.label][event.type] = (acc[team.label][event.type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, Record<string, number>>);
+  // Score frequency by time intervals (per minute)
+  const scoreFrequency = (() => {
+    const intervalMinutes = 1;
+    const intervals: Record<number, number> = {};
 
-  // Prepare data for charts
-  const teamComparisonData = [
-    {
-      category: "Points",
-      [teamA.label]: summaryA.points,
-      [teamB.label]: summaryB.points,
-    },
-    {
-      category: "2-Point Scores",
-      [teamA.label]: summaryA.twoPointScores,
-      [teamB.label]: summaryB.twoPointScores,
-    },
-    {
-      category: "3-Point Scores",
-      [teamA.label]: summaryA.threePointScores,
-      [teamB.label]: summaryB.threePointScores,
-    },
-    {
-      category: "Shot Attempts",
-      [teamA.label]: summaryA.shotAttempts,
-      [teamB.label]: summaryB.shotAttempts,
-    },
-    {
-      category: "Off. Rebounds",
-      [teamA.label]: summaryA.offRebounds,
-      [teamB.label]: summaryB.offRebounds,
-    },
-    {
-      category: "Def. Rebounds",
-      [teamA.label]: summaryA.defRebounds,
-      [teamB.label]: summaryB.defRebounds,
-    },
-    {
-      category: "Turnovers",
-      [teamA.label]: summaryA.turnovers,
-      [teamB.label]: summaryB.turnovers,
-    },
-  ];
+    scoreEvents.forEach((event) => {
+      const interval = Math.floor(event.timestamp / 60);
+      intervals[interval] = (intervals[interval] || 0) + 1;
+    });
 
-  const eventTypeData = [
-    {
-      name: "Shot Attempts",
-      value: gameData.events.filter((e) => e.type === "shot_attempt").length,
-      color: "#3b82f6",
-    },
-    {
-      name: "2-Point Scores",
-      value: gameData.events.filter(
-        (e) => e.type === "score" && e.shotType === "2pt"
+    return Object.entries(intervals).map(([minute, count]) => ({
+      minute: parseInt(minute),
+      count,
+      timeLabel: `${minute}:00-${parseInt(minute) + 1}:00`,
+    }));
+  })();
+
+  // Confidence distribution
+  const confidenceDistribution = (() => {
+    const ranges = [
+      { min: 0.9, max: 1.0, label: "90-100%" },
+      { min: 0.8, max: 0.9, label: "80-89%" },
+      { min: 0.7, max: 0.8, label: "70-79%" },
+      { min: 0.6, max: 0.7, label: "60-69%" },
+      { min: 0.5, max: 0.6, label: "50-59%" },
+      { min: 0.0, max: 0.5, label: "0-49%" },
+    ];
+
+    return ranges.map((range) => ({
+      range: range.label,
+      count: scoreEvents.filter(
+        (event) => event.confidence >= range.min && event.confidence < range.max
       ).length,
+    }));
+  })();
+
+  // Score scatter plot data
+  const scoreScatterData = scoreEvents.map((event) => ({
+    timestamp: event.timestamp,
+    confidence: event.confidence,
+    timeFormatted: formatTime(event.timestamp),
+  }));
+
+  // Simple score breakdown
+  const scoreBreakdownData = [
+    {
+      name: "Total Scores",
+      value: scoreEvents.length,
       color: "#10b981",
     },
     {
-      name: "3-Point Scores",
-      value: gameData.events.filter(
-        (e) => e.type === "score" && e.shotType === "3pt"
-      ).length,
-      color: "#ff9500",
+      name: "High Confidence",
+      value: scoreEvents.filter((e) => e.confidence >= 0.8).length,
+      color: "#22c55e",
     },
     {
-      name: "Rebounds",
-      value: gameData.events.filter(
-        (e) => e.type === "offensive_rebound" || e.type === "defensive_rebound"
+      name: "Medium Confidence",
+      value: scoreEvents.filter(
+        (e) => e.confidence >= 0.5 && e.confidence < 0.8
       ).length,
       color: "#f59e0b",
     },
     {
-      name: "Turnovers",
-      value: gameData.events.filter(
-        (e) => e.type === "turnover" || e.type === "steal"
-      ).length,
+      name: "Low Confidence",
+      value: scoreEvents.filter((e) => e.confidence < 0.5).length,
       color: "#ef4444",
     },
   ];
-
-  // Score progression over time
-  const scoreProgression = gameData.events
-    .filter((e) => e.type === "score")
-    .sort((a, b) => a.timestamp - b.timestamp)
-    .reduce((acc, event) => {
-      const team = gameData.teams.find((t) => t.id === event.teamId);
-      if (!team) return acc;
-
-      const lastEntry = acc[acc.length - 1];
-      const newEntry = {
-        timestamp: event.timestamp,
-        [teamA.label]: lastEntry ? lastEntry[teamA.label] : 0,
-        [teamB.label]: lastEntry ? lastEntry[teamB.label] : 0,
-        shotType: event.shotType || "unknown",
-        teamId: event.teamId,
-      };
-      newEntry[team.label] += event.scoreDelta || 0;
-      acc.push(newEntry);
-      return acc;
-    }, [] as any[]);
 
   const formatTime = (timestamp: number) => {
     const minutes = Math.floor(timestamp / 60);
@@ -155,20 +122,62 @@ export function StatisticsCharts({ gameData }: StatisticsChartsProps) {
     <div className="space-y-6">
       {/* Responsive Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Team Comparison Bar Chart */}
+        {/* Score Distribution Over Time */}
         <div className="bg-card border rounded-lg p-4 lg:p-6">
           <h3 className="text-lg font-semibold mb-4">
-            Team Statistics Comparison
+            Score Distribution Over Time
           </h3>
           <div className="h-64 lg:h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={teamComparisonData}
+              <LineChart
+                data={scoreProgression}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
-                  dataKey="category"
+                  dataKey="timestamp"
+                  tickFormatter={formatTime}
+                  fontSize={12}
+                />
+                <YAxis />
+                <Tooltip
+                  labelFormatter={(value) => `Time: ${formatTime(value)}`}
+                  formatter={(value) => [
+                    `${value} scores`,
+                    "Cumulative Scores",
+                  ]}
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "6px",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="cumulativeScores"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  dot={{ fill: "#10b981", r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Score Frequency by Time */}
+        <div className="bg-card border rounded-lg p-4 lg:p-6">
+          <h3 className="text-lg font-semibold mb-4">
+            Score Frequency by Minute
+          </h3>
+          <div className="h-64 lg:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={scoreFrequency}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="timeLabel"
                   angle={-45}
                   textAnchor="end"
                   height={60}
@@ -182,44 +191,34 @@ export function StatisticsCharts({ gameData }: StatisticsChartsProps) {
                     borderRadius: "6px",
                   }}
                 />
-                <Legend />
-                <Bar
-                  dataKey={teamA.label}
-                  fill={teamA.color}
-                  name={teamA.label}
-                />
-                <Bar
-                  dataKey={teamB.label}
-                  fill={teamB.color}
-                  name={teamB.label}
-                />
+                <Bar dataKey="count" fill="#3b82f6" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
 
-        {/* Score Breakdown Chart */}
+      {/* Confidence Distribution and Score Scatter */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Confidence Distribution */}
         <div className="bg-card border rounded-lg p-4 lg:p-6">
-          <h3 className="text-lg font-semibold mb-4">Score Breakdown</h3>
+          <h3 className="text-lg font-semibold mb-4">
+            Score Confidence Distribution
+          </h3>
           <div className="h-64 lg:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={[
-                  {
-                    category: "2-Point Scores",
-                    [teamA.label]: summaryA.twoPointScores,
-                    [teamB.label]: summaryB.twoPointScores,
-                  },
-                  {
-                    category: "3-Point Scores",
-                    [teamA.label]: summaryA.threePointScores,
-                    [teamB.label]: summaryB.threePointScores,
-                  },
-                ]}
+                data={confidenceDistribution}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="category" />
+                <XAxis
+                  dataKey="range"
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                  fontSize={12}
+                />
                 <YAxis />
                 <Tooltip
                   contentStyle={{
@@ -228,119 +227,49 @@ export function StatisticsCharts({ gameData }: StatisticsChartsProps) {
                     borderRadius: "6px",
                   }}
                 />
-                <Legend />
-                <Bar
-                  dataKey={teamA.label}
-                  fill={teamA.color}
-                  name={teamA.label}
-                />
-                <Bar
-                  dataKey={teamB.label}
-                  fill={teamB.color}
-                  name={teamB.label}
-                />
+                <Bar dataKey="count" fill="#8b5cf6" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
 
-      {/* Event Distribution and Score Progression */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Event Distribution Pie Chart */}
+        {/* Score Scatter Plot */}
         <div className="bg-card border rounded-lg p-4 lg:p-6">
-          <h3 className="text-lg font-semibold mb-4">Event Distribution</h3>
+          <h3 className="text-lg font-semibold mb-4">Score Timeline Scatter</h3>
           <div className="h-64 lg:h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={eventTypeData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`
-                  }
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {eventTypeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
+              <ScatterChart
+                data={scoreScatterData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="timestamp"
+                  tickFormatter={formatTime}
+                  fontSize={12}
+                />
+                <YAxis
+                  dataKey="confidence"
+                  domain={[0, 1]}
+                  tickFormatter={(value) => `${Math.round(value * 100)}%`}
+                />
                 <Tooltip
+                  labelFormatter={(value) => `Time: ${formatTime(value)}`}
+                  formatter={(value, name) => [
+                    `${Math.round((value as number) * 100)}%`,
+                    "Confidence",
+                  ]}
                   contentStyle={{
                     backgroundColor: "hsl(var(--background))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "6px",
                   }}
                 />
-              </PieChart>
+                <Scatter dataKey="confidence" fill="#f59e0b" />
+              </ScatterChart>
             </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Score Progression Line Chart */}
-        {scoreProgression.length > 0 && (
-          <div className="bg-card border rounded-lg p-4 lg:p-6">
-            <h3 className="text-lg font-semibold mb-4">Score Progression</h3>
-            <div className="h-64 lg:h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={scoreProgression}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="timestamp"
-                    tickFormatter={formatTime}
-                    fontSize={12}
-                  />
-                  <YAxis />
-                  <Tooltip
-                    labelFormatter={(value) => `Time: ${formatTime(value)}`}
-                    formatter={(value, name, props) => {
-                      const shotType = props.payload?.shotType;
-                      const teamId = props.payload?.teamId;
-                      const team = gameData.teams.find((t) => t.id === teamId);
-                      const shotTypeText =
-                        shotType && shotType !== "unknown"
-                          ? ` (${shotType})`
-                          : "";
-                      return [
-                        `${value} points${shotTypeText}`,
-                        team?.label || name,
-                      ];
-                    }}
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--background))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "6px",
-                    }}
-                  />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey={teamA.label}
-                    stroke={teamA.color}
-                    strokeWidth={2}
-                    dot={{ fill: teamA.color, r: 4 }}
-                    name={teamA.label}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey={teamB.label}
-                    stroke={teamB.color}
-                    strokeWidth={2}
-                    dot={{ fill: teamB.color, r: 4 }}
-                    name={teamB.label}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Confidence Distribution and Analysis Quality */}

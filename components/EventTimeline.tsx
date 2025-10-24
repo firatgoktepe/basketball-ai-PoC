@@ -12,6 +12,7 @@ import {
   SkipBack,
   SkipForward,
   X,
+  Download,
 } from "lucide-react";
 import type { GameData, VideoFile } from "@/types";
 import { usePlayerFilter } from "./PlayerFilterContext";
@@ -19,12 +20,14 @@ import { usePlayerFilter } from "./PlayerFilterContext";
 interface EventTimelineProps {
   gameData: GameData;
   videoFile: VideoFile;
+  processedVideoUrl?: string;
   onSeekToTime?: (time: number) => void;
 }
 
 export function EventTimeline({
   gameData,
   videoFile,
+  processedVideoUrl,
   onSeekToTime,
 }: EventTimelineProps) {
   const { selectedPlayer, clearFilter } = usePlayerFilter();
@@ -47,17 +50,8 @@ export function EventTimeline({
           return <Trophy className="w-4 h-4 text-orange-600" />; // Orange for 3-pointers
         }
         return <Trophy className="w-4 h-4 text-green-600" />; // Green for 2-pointers
-      case "shot_attempt":
-      case "missed_shot":
-        return <Target className="w-4 h-4 text-blue-600" />;
-      case "offensive_rebound":
-      case "defensive_rebound":
-        return <RotateCcw className="w-4 h-4 text-orange-600" />;
-      case "turnover":
-      case "steal":
-        return <AlertTriangle className="w-4 h-4 text-red-600" />;
       default:
-        return <Target className="w-4 h-4 text-gray-600" />;
+        return <Trophy className="w-4 h-4 text-green-600" />; // Default to score icon
     }
   };
 
@@ -65,17 +59,8 @@ export function EventTimeline({
     switch (eventType) {
       case "score":
         return "bg-green-100 border-green-300 text-green-800";
-      case "shot_attempt":
-      case "missed_shot":
-        return "bg-blue-100 border-blue-300 text-blue-800";
-      case "offensive_rebound":
-      case "defensive_rebound":
-        return "bg-orange-100 border-orange-300 text-orange-800";
-      case "turnover":
-      case "steal":
-        return "bg-red-100 border-red-300 text-red-800";
       default:
-        return "bg-gray-100 border-gray-300 text-gray-800";
+        return "bg-green-100 border-green-300 text-green-800";
     }
   };
 
@@ -173,7 +158,7 @@ export function EventTimeline({
       <div className="relative bg-black rounded-lg overflow-hidden">
         <video
           ref={videoRef}
-          src={videoFile.url}
+          src={processedVideoUrl || videoFile.url}
           className="w-full h-auto max-h-[40vh]"
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
@@ -254,27 +239,17 @@ export function EventTimeline({
         </div>
       </div>
 
-      {/* Player Filter Indicator */}
-      {selectedPlayer.playerId && (
-        <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-primary" />
-            <span className="font-medium">
-              Filtered by Player #{selectedPlayer.playerId} (
-              {
-                gameData.teams.find((t) => t.id === selectedPlayer.teamId)
-                  ?.label
-              }
-              )
-            </span>
-          </div>
-          <button
-            onClick={clearFilter}
-            className="text-primary hover:text-primary/80 transition-colors flex items-center gap-1 text-sm"
+      {/* Download Button */}
+      {processedVideoUrl && (
+        <div className="flex justify-center">
+          <a
+            href={processedVideoUrl}
+            download={`processed_${videoFile.name}`}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
-            <X className="w-4 h-4" />
-            Clear Filter
-          </button>
+            <Download className="w-4 h-4" />
+            Download Processed Video
+          </a>
         </div>
       )}
 

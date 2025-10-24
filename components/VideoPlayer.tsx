@@ -2,14 +2,12 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
-import { PersonDetectionOverlay } from "./PersonDetectionOverlay";
 import { VideoQualityCheck } from "./VideoQualityCheck";
-import type { VideoFile, DetectionResult, GameData, CropRegion } from "@/types";
+import type { VideoFile, GameData, CropRegion } from "@/types";
 
 interface VideoPlayerProps {
   videoFile: VideoFile;
   onDurationChange?: (duration: number) => void;
-  detections?: DetectionResult[];
   gameData?: GameData | null;
   onCropRegionChange?: (region: CropRegion | null) => void;
   cropRegion?: CropRegion | null;
@@ -18,7 +16,6 @@ interface VideoPlayerProps {
 export function VideoPlayer({
   videoFile,
   onDurationChange,
-  detections,
   gameData,
   onCropRegionChange,
   cropRegion,
@@ -201,16 +198,6 @@ export function VideoPlayer({
           controls
           preload="metadata"
         />
-
-        {/* Person Detection Overlay */}
-        {detections && detections.length > 0 && (
-          <PersonDetectionOverlay
-            videoFile={videoFile}
-            detections={detections}
-            gameData={gameData ?? null}
-            currentTime={currentTime}
-          />
-        )}
 
         {/* Controls Overlay */}
         <div

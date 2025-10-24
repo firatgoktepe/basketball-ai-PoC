@@ -14,23 +14,7 @@ export interface Team {
 
 export interface GameEvent {
   id: string;
-  type:
-    | "score"
-    | "shot_attempt"
-    | "missed_shot"
-    | "offensive_rebound"
-    | "defensive_rebound"
-    | "turnover"
-    | "steal"
-    | "3pt"
-    | "long_distance_attempt"
-    | "block"
-    | "pass"
-    | "dunk"
-    | "assist"
-    | "layup"
-    | "foul_shot"
-    | "dribble";
+  type: "score"; // Backend only provides score events
   teamId: string;
   playerId?: string; // Jersey number or player identifier
   scoreDelta?: number;
@@ -105,27 +89,14 @@ export interface GameData {
 }
 
 export interface AnalysisProgress {
-  stage:
-    | "initializing"
-    | "sampling"
-    | "detection"
-    | "ocr"
-    | "fusion"
-    | "results"
-    | "error";
+  stage: "initializing" | "processing" | "completed" | "error";
   progress: number; // 0-100
   message: string;
 }
 
+// Simplified analysis options for backend API
 export interface AnalysisOptions {
-  videoFile: VideoFile;
-  cropRegion?: { x: number; y: number; width: number; height: number }; // Optional now - not used for amateur videos
-  samplingRate: number;
-  enableBallDetection: boolean;
-  enablePoseEstimation: boolean;
-  enable3ptEstimation: boolean;
-  enableJerseyNumberDetection?: boolean; // New: detect and track player jersey numbers
-  forceMockPoseModel?: boolean;
+  videoFile: File;
   onProgress: (progress: AnalysisProgress) => void;
 }
 
@@ -136,67 +107,43 @@ export interface CropRegion {
   height: number;
 }
 
-export interface DetectionResult {
-  frameIndex: number;
-  timestamp: number;
-  detections: {
-    type: "person" | "ball";
-    bbox: [number, number, number, number];
-    confidence: number;
-    teamId?: string;
-  }[];
-}
-
-export interface OCRResult {
-  frameIndex: number;
-  timestamp: number;
-  scores: {
-    teamA: number;
-    teamB: number;
+// Data transformation function for backend results
+export function transformBackendData(
+  backendResults: any,
+  videoUrl: string
+): GameData {
+  return {
+    video: {
+      filename: "processed_video.mp4",
+      duration: backendResults.video.frames / backendResults.video.fps,
+    },
+    teams: [{ id: "team", label: "Team", color: "#3b82f6" }],
+    events: backendResults.scores.map((score: any, index: number) => ({
+      id: `score-${score.frame}`,
+      type: "score" as const,
+      teamId: "team",
+      timestamp: score.timestamp,
+      confidence: score.confidence,
+      source: score.mode,
+      scoreDelta: 2, // Assume 2-point scores (backend doesn't specify)
+    })),
+    summary: {
+      team: {
+        points: backendResults.total_scores * 2, // Assume 2-pts each
+        twoPointScores: backendResults.total_scores,
+        threePointScores: 0,
+        foulShots: 0,
+        shotAttempts: 0,
+        offRebounds: 0,
+        defRebounds: 0,
+        turnovers: 0,
+        blocks: 0,
+        dunks: 0,
+        assists: 0,
+        passes: 0,
+        dribbles: 0,
+        players: [],
+      },
+    },
   };
-  confidence: number;
-}
-
-export interface PoseResult {
-  frameIndex: number;
-  timestamp: number;
-  poses: {
-    keypoints: Array<{ x: number; y: number; confidence: number }>;
-    bbox: [number, number, number, number];
-    teamId?: string;
-    playerId?: string; // Jersey number
-  }[];
-}
-
-export interface JerseyDetectionResult {
-  frameIndex: number;
-  timestamp: number;
-  players: {
-    playerId: string; // Jersey number
-    bbox: [number, number, number, number];
-    teamId?: string;
-    confidence: number;
-  }[];
-}
-
-export interface HoopDetectionResult {
-  frameIndex: number;
-  timestamp: number;
-  hoopRegion?: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    confidence: number;
-  };
-}
-
-export interface VisualScoreEvent {
-  timestamp: number;
-  teamId: string;
-  playerId?: string;
-  scoreDelta: number;
-  shotType: "2pt" | "3pt" | "1pt";
-  confidence: number;
-  ballThroughHoop: boolean;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { VideoUploader } from "@/components/VideoUploader";
@@ -10,28 +10,31 @@ import { ResultsDisplay } from "@/components/ResultsDisplay";
 import { HelpDialog } from "@/components/HelpDialog";
 import { PrivacyNotice } from "@/components/PrivacyNotice";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import type { CropRegion } from "@/types";
-import { AnalysisWorker } from "@/lib/workers/AnalysisWorker";
-import { generateDemoGameData } from "@/lib/demo-data";
-import { handleError } from "@/lib/utils/error-handler";
-import type {
-  VideoFile,
-  AnalysisProgress,
-  GameData,
-  DetectionResult,
-} from "@/types";
+import {
+  useUploadVideo,
+  useJobStatus,
+  useDownloadVideo,
+} from "@/lib/api/basketball-api";
+import { transformBackendData } from "@/types";
+import type { VideoFile, AnalysisProgress, GameData } from "@/types";
 
 export default function Home() {
   const [videoFile, setVideoFile] = useState<VideoFile | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState<AnalysisProgress | null>(null);
   const [gameData, setGameData] = useState<GameData | null>(null);
-  const [personDetections, setPersonDetections] = useState<DetectionResult[]>(
-    []
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [processedVideoUrl, setProcessedVideoUrl] = useState<string | null>(
+    null
   );
-  const [cropRegion, setCropRegion] = useState<CropRegion | null>(null);
 
-  const analysisWorkerRef = useRef<AnalysisWorker | null>(null);
+  // API hooks
+  const uploadMutation = useUploadVideo();
+  const downloadMutation = useDownloadVideo();
+  const { data: jobStatus, error: jobError } = useJobStatus(
+    jobId,
+    isProcessing
+  );
 
   const handleVideoSelect = useCallback((file: File) => {
     console.log("🎬 Uploading video file:", file);
@@ -73,111 +76,107 @@ export default function Home() {
     }
   }, []);
 
-  const handleStartAnalysis = useCallback(
-    async (options: {
-      samplingRate: number;
-      enableBallDetection: boolean;
-      enablePoseEstimation: boolean;
-      enable3ptEstimation: boolean;
-      enableJerseyNumberDetection?: boolean;
-      forceMockPoseModel?: boolean;
-    }) => {
-      if (!videoFile) return;
+  const handleStartAnalysis = useCallback(async () => {
+    if (!videoFile) return;
 
-      setIsProcessing(true);
+    setIsProcessing(true);
+    setProgress({
+      stage: "initializing",
+      progress: 0,
+      message: "Uploading video to backend...",
+    });
+
+    try {
+      // Upload video to backend
+      const uploadResult = await uploadMutation.mutateAsync(videoFile.file);
+      console.log("Upload result:", uploadResult);
+      console.log("Setting job ID:", uploadResult.job_id);
+      setJobId(uploadResult.job_id);
+
       setProgress({
-        stage: "initializing",
+        stage: "processing",
+        progress: 20,
+        message: "Video uploaded, processing started...",
+      });
+    } catch (error) {
+      console.error("Upload failed:", error);
+      setProgress({
+        stage: "error",
         progress: 0,
-        message: "Initializing analysis...",
+        message: `Upload failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+      });
+      setIsProcessing(false);
+    }
+  }, [videoFile, uploadMutation]);
+
+  // Handle job status updates
+  useEffect(() => {
+    if (!jobStatus) return;
+
+    if (jobStatus.status === "completed" && jobStatus.results) {
+      setProgress({
+        stage: "completed",
+        progress: 100,
+        message: "Analysis completed! Downloading processed video...",
       });
 
-      try {
-        // Initialize analysis worker if not already done
-        if (!analysisWorkerRef.current) {
-          analysisWorkerRef.current = new AnalysisWorker();
-        }
+      // Download processed video
+      downloadMutation.mutate(jobId!, {
+        onSuccess: (videoBlob) => {
+          const videoUrl = URL.createObjectURL(videoBlob);
+          setProcessedVideoUrl(videoUrl);
 
-        const worker = analysisWorkerRef.current;
-
-        // Start the analysis
-        console.log(
-          "🚀 Starting REAL analysis with worker for video:",
-          videoFile.name
-        );
-        const result = await worker.analyzeVideo(
-          {
-            videoFile,
-            cropRegion: cropRegion ? cropRegion : undefined, // Convert null to undefined
-            samplingRate: options.samplingRate,
-            enableBallDetection: options.enableBallDetection,
-            enablePoseEstimation: options.enablePoseEstimation,
-            enable3ptEstimation: options.enable3ptEstimation,
-            enableJerseyNumberDetection: options.enableJerseyNumberDetection,
-            forceMockPoseModel: options.forceMockPoseModel,
-          },
-          (progressData) => {
-            setProgress(progressData);
-          }
-        );
-
-        console.log("✅ Analysis completed with result:", result);
-        setGameData(result);
-
-        // Note: Real person detections would come from the worker
-        // For now, we'll generate mock detections for visualization
-        // In a full implementation, the worker would return these too
-        const mockDetections = generateMockPersonDetections();
-        setPersonDetections(mockDetections);
-      } catch (error) {
-        console.error("Analysis failed:", error);
-        setProgress({
-          stage: "error",
-          progress: 0,
-          message: `Analysis failed: ${error}`,
-        });
-      } finally {
-        setIsProcessing(false);
-      }
-    },
-    [videoFile, cropRegion]
-  );
-
-  const handleCropRegionChange = useCallback((region: CropRegion | null) => {
-    setCropRegion(region);
-  }, []);
-
-  const generateMockPersonDetections = (): DetectionResult[] => {
-    const detections: DetectionResult[] = [];
-    const numFrames = 30; // 30 frames for demo
-
-    for (let i = 0; i < numFrames; i++) {
-      const timestamp = i * 2; // 2 seconds per frame
-      const numPersons = Math.floor(Math.random() * 3) + 1; // 1-3 persons per frame
-
-      const frameDetections = [];
-      for (let j = 0; j < numPersons; j++) {
-        const x = Math.random() * 600 + 100;
-        const y = Math.random() * 300 + 100;
-        const width = 60 + Math.random() * 40;
-        const height = 100 + Math.random() * 50;
-
-        frameDetections.push({
-          type: "person" as const,
-          bbox: [x, y, width, height] as [number, number, number, number],
-          confidence: 0.6 + Math.random() * 0.3,
-          teamId: Math.random() > 0.5 ? "teamA" : "teamB",
-        });
-      }
-
-      detections.push({
-        frameIndex: i,
-        timestamp,
-        detections: frameDetections,
+          // Transform backend data to frontend format
+          const transformedData = transformBackendData(
+            jobStatus.results!,
+            videoUrl
+          );
+          setGameData(transformedData);
+          setIsProcessing(false);
+        },
+        onError: (error) => {
+          console.error("Download failed:", error);
+          setProgress({
+            stage: "error",
+            progress: 0,
+            message: `Download failed: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+          });
+          setIsProcessing(false);
+        },
+      });
+    } else if (jobStatus.status === "failed") {
+      setProgress({
+        stage: "error",
+        progress: 0,
+        message: `Analysis failed: ${jobStatus.error || "Unknown error"}`,
+      });
+      setIsProcessing(false);
+    } else if (jobStatus.status === "processing") {
+      setProgress({
+        stage: "processing",
+        progress: 50,
+        message: "Backend is analyzing video...",
       });
     }
+  }, [jobStatus, jobId, downloadMutation]);
 
-    return detections;
-  };
+  // Handle job errors
+  useEffect(() => {
+    if (jobError) {
+      setProgress({
+        stage: "error",
+        progress: 0,
+        message: `Status check failed: ${
+          jobError instanceof Error ? jobError.message : "Unknown error"
+        }`,
+      });
+      setIsProcessing(false);
+    }
+  }, [jobError]);
 
   return (
     <ErrorBoundary>
@@ -254,10 +253,9 @@ export default function Home() {
                 <div className="max-w-4xl mx-auto px-4">
                   <VideoPlayer
                     videoFile={videoFile}
-                    detections={personDetections}
                     gameData={gameData}
-                    cropRegion={cropRegion}
-                    onCropRegionChange={handleCropRegionChange}
+                    cropRegion={null}
+                    onCropRegionChange={() => {}}
                     onDurationChange={(duration) => {
                       setVideoFile((prev) =>
                         prev ? { ...prev, duration } : null
@@ -289,7 +287,6 @@ export default function Home() {
                     <ResultsDisplay
                       gameData={gameData}
                       videoFile={videoFile}
-                      detections={personDetections}
                       isRealAnalysis={true}
                     />
                   </div>

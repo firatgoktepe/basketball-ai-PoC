@@ -9,22 +9,16 @@ interface ProgressIndicatorProps {
 }
 
 const stageLabels = {
-  initializing: "Initializing Analysis",
-  sampling: "Sampling Video Frames",
-  detection: "Detecting Players & Objects",
-  ocr: "Reading Scoreboard",
-  fusion: "Processing Events",
-  results: "Generating Results",
+  initializing: "Uploading Video",
+  processing: "Processing Video",
+  completed: "Analysis Complete",
   error: "Error Occurred",
 };
 
 const stageDescriptions = {
-  initializing: "Setting up analysis models and preparing video processing...",
-  sampling: "Extracting frames from video at the selected sampling rate...",
-  detection: "Running AI models to detect players, ball, and analyze poses...",
-  ocr: "Using OCR to read scoreboard and track score changes...",
-  fusion: "Combining all data sources to identify game events...",
-  results: "Compiling statistics and generating final results...",
+  initializing: "Uploading video to backend server...",
+  processing: "Backend is analyzing video for score detection...",
+  completed: "Analysis completed successfully!",
   error: "An error occurred during analysis. Please try again.",
 };
 
@@ -42,7 +36,7 @@ export function ProgressIndicator({ progress }: ProgressIndicatorProps) {
     if (progress.stage === "error") {
       return <AlertCircle className="w-6 h-6 text-destructive" />;
     }
-    if (progress.stage === "results" && progress.progress === 100) {
+    if (progress.stage === "completed" && progress.progress === 100) {
       return <CheckCircle className="w-6 h-6 text-green-600" />;
     }
     return <Loader2 className="w-6 h-6 animate-spin text-primary" />;
@@ -50,7 +44,7 @@ export function ProgressIndicator({ progress }: ProgressIndicatorProps) {
 
   const getProgressColor = () => {
     if (progress.stage === "error") return "bg-destructive";
-    if (progress.stage === "results" && progress.progress === 100)
+    if (progress.stage === "completed" && progress.progress === 100)
       return "bg-green-600";
     return "bg-primary";
   };
@@ -93,19 +87,10 @@ export function ProgressIndicator({ progress }: ProgressIndicatorProps) {
           <div className="grid grid-cols-2 gap-2 text-xs">
             {Object.entries(stageLabels).map(([stage, label]) => {
               const isCompleted =
-                (progress.stage as string) === "results" ||
+                (progress.stage as string) === "completed" ||
                 (stage === "initializing" &&
                   progress.stage !== "initializing") ||
-                (stage === "sampling" &&
-                  ["detection", "ocr", "fusion", "results"].includes(
-                    progress.stage
-                  )) ||
-                (stage === "detection" &&
-                  ["ocr", "fusion", "results"].includes(progress.stage)) ||
-                (stage === "ocr" &&
-                  ["fusion", "results"].includes(progress.stage)) ||
-                (stage === "fusion" &&
-                  (progress.stage as string) === "results");
+                (stage === "processing" && progress.stage === "completed");
 
               const isCurrent = progress.stage === stage;
 

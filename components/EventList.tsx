@@ -33,7 +33,7 @@ export function EventList({
   const { selectedPlayer, clearFilter } = usePlayerFilter();
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [filter, setFilter] = useState<
-    "all" | "high_confidence" | "low_confidence" | "2pt_scores" | "3pt_scores"
+    "all" | "high_confidence" | "low_confidence"
   >("all");
   const [sortBy, setSortBy] = useState<"timestamp" | "confidence" | "type">(
     "timestamp"
@@ -119,10 +119,6 @@ export function EventList({
     // Then apply confidence/type filters
     if (filter === "high_confidence") return event.confidence >= 0.5;
     if (filter === "low_confidence") return event.confidence < 0.5;
-    if (filter === "2pt_scores")
-      return event.type === "score" && event.shotType === "2pt";
-    if (filter === "3pt_scores")
-      return event.type === "score" && event.shotType === "3pt";
     return true;
   });
 
@@ -229,7 +225,7 @@ export function EventList({
                 : "bg-muted"
             }`}
           >
-            All Events
+            All Scores
           </button>
           <button
             onClick={() => setFilter("high_confidence")}
@@ -250,22 +246,6 @@ export function EventList({
             }`}
           >
             Low Confidence
-          </button>
-          <button
-            onClick={() => setFilter("2pt_scores")}
-            className={`px-3 py-1 rounded text-sm ${
-              filter === "2pt_scores" ? "bg-green-600 text-white" : "bg-muted"
-            }`}
-          >
-            2-Point Scores
-          </button>
-          <button
-            onClick={() => setFilter("3pt_scores")}
-            className={`px-3 py-1 rounded text-sm ${
-              filter === "3pt_scores" ? "bg-orange-600 text-white" : "bg-muted"
-            }`}
-          >
-            3-Point Scores
           </button>
         </div>
 

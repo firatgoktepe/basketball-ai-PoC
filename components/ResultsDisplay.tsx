@@ -20,23 +20,20 @@ import { GameSummary } from "./GameSummary";
 import { EventTimeline } from "./EventTimeline";
 import { StatisticsCharts } from "./StatisticsCharts";
 import { EventList } from "./EventList";
-import { TeamClusteringVisualization } from "./TeamClusteringVisualization";
 import { Highlights } from "./Highlights";
 import { PlayerBasedAnalysis } from "./PlayerBasedAnalysis";
 import { PlayerFilterProvider } from "./PlayerFilterContext";
-import type { GameData, VideoFile, DetectionResult } from "@/types";
+import type { GameData, VideoFile } from "@/types";
 
 interface ResultsDisplayProps {
   gameData: GameData;
   videoFile: VideoFile;
-  detections?: DetectionResult[];
   isRealAnalysis?: boolean;
 }
 
 export function ResultsDisplay({
   gameData,
   videoFile,
-  detections,
   isRealAnalysis = true,
 }: ResultsDisplayProps) {
   const [activeTab, setActiveTab] = useState<
@@ -345,12 +342,6 @@ export function ResultsDisplay({
           {activeTab === "summary" && (
             <div className="space-y-6">
               <GameSummary gameData={gameData} />
-              {detections && detections.length > 0 && (
-                <TeamClusteringVisualization
-                  gameData={gameData}
-                  detections={detections}
-                />
-              )}
             </div>
           )}
 
