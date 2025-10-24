@@ -9160,11 +9160,7 @@ var require_float = __commonJS({
             if (sign) val = -val;
             if (val === 0)
               writeUint(
-                1 / val > 0
-                  ? /* positive */
-                    0
-                  : /* negative 0 */
-                    2147483648,
+                1 / val > 0 ? /* positive */ 0 : /* negative 0 */ 2147483648,
                 buf,
                 pos
               );
@@ -9272,11 +9268,7 @@ var require_float = __commonJS({
             if (val === 0) {
               writeUint(0, buf, pos + off0);
               writeUint(
-                1 / val > 0
-                  ? /* positive */
-                    0
-                  : /* negative 0 */
-                    2147483648,
+                1 / val > 0 ? /* positive */ 0 : /* negative 0 */ 2147483648,
                 buf,
                 pos + off1
               );
@@ -10335,10 +10327,7 @@ var require_reader = __commonJS({
       BufferReader = BufferReader_;
       Reader.create = create();
       BufferReader._configure();
-      var fn = util.Long
-        ? "toLong"
-        : /* istanbul ignore next */
-          "toNumber";
+      var fn = util.Long ? "toLong" : /* istanbul ignore next */ "toNumber";
       util.merge(Reader.prototype, {
         int64: function read_int64() {
           return readLongVarint.call(this)[fn](false);

@@ -23,6 +23,8 @@
     "prepare": "node scripts/copy-wasm-files.js"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.5",
+    "@tanstack/react-query-devtools": "^5.90.2",
     "@tensorflow/tfjs": "^4.15.0",
     "@vercel/speed-insights": "^1.2.0",
     "clsx": "^2.0.0",
@@ -41,6 +43,7 @@
     "typescript-eslint": "^8.46.2"
   },
   "devDependencies": {
+    "@tanstack/eslint-plugin-query": "^5.91.2",
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

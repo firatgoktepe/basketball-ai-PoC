@@ -46,3 +46,5 @@ next-env.d.ts
 .cursor/commands/
 
 # Some unnecessary md's
+Basketball GPU API (Modal).md
+backend_docs.md

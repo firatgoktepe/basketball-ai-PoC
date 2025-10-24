@@ -2892,9 +2892,9 @@ var init_log = __esm({
     logLevelPrefix = ["V", "I", "W", "E", "F"];
     doLog = (level, message) => {
       console.log(
-        `[${
-          logLevelPrefix[level]
-        },${/* @__PURE__ */ new Date().toISOString()}]${message}`
+        `[${logLevelPrefix[level]},${
+          /* @__PURE__ */ new Date().toISOString()
+        }]${message}`
       );
     };
     configureLogger = ($configLogLevel, $debug) => {
