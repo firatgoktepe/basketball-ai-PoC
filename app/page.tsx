@@ -55,27 +55,6 @@ export default function Home() {
     }
   }, []);
 
-  // Demo function to load a sample video
-  const loadDemoVideo = useCallback(() => {
-    console.log("🎬 Loading demo video...");
-    try {
-      // Create a demo video file for testing
-      const demoVideoFile: VideoFile = {
-        file: new File([""], "demo_basketball_game.mp4", { type: "video/mp4" }),
-        url: "/demo-video.mp4", // Fixed: Use proper public directory path
-        name: "demo_basketball_game.mp4",
-        size: 1024 * 1024 * 10, // 10MB
-        duration: 125.4,
-      };
-      console.log("✅ Demo video file created:", demoVideoFile);
-      setVideoFile(demoVideoFile);
-      setGameData(null);
-      setProgress(null);
-    } catch (error) {
-      console.error("❌ Error creating demo video:", error);
-    }
-  }, []);
-
   const handleStartAnalysis = useCallback(async () => {
     if (!videoFile) return;
 
@@ -231,19 +210,6 @@ export default function Home() {
 
                 {/* Privacy Notice on Upload Page */}
                 <PrivacyNotice />
-
-                {/* Demo Button */}
-                <div className="text-center space-y-2">
-                  <button
-                    onClick={loadDemoVideo}
-                    className="px-4 sm:px-6 py-2 sm:py-3 border border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors text-sm sm:text-base"
-                  >
-                    Load Demo Video (for testing)
-                  </button>
-                  <p className="text-xs text-muted-foreground">
-                    Use this to test the interface with a sample video
-                  </p>
-                </div>
               </div>
             )}
 
