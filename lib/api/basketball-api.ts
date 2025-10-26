@@ -228,10 +228,20 @@ export const getJobStatus = async (
   const response = await fetch(`/api/status-proxy/${jobId}`);
 
   if (!response.ok) {
-    throw new Error(`Status check failed: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error(`Status check failed: ${response.status} ${response.statusText}`, errorText);
+
+    // If it's a 404, the job might have been cleaned up or never existed
+    if (response.status === 404) {
+      throw new Error(`Job not found: ${jobId}. The backend may have cleaned up this job.`);
+    }
+
+    throw new Error(`Status check failed: ${response.statusText} - ${errorText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log("Job status response:", data);
+  return data;
 };
 
 export const downloadProcessedVideo = async (jobId: string): Promise<Blob> => {
@@ -273,10 +283,12 @@ export const useJobStatus = (jobId: string | null, enabled: boolean = true) => {
       return 2000; // Poll every 2 seconds
     },
     retry: (failureCount, error) => {
-      // Don't retry on 404 (job not found) or 500 (server error)
+      // Don't retry on 404 (job not found) - backend cleaned up the job
       if (error instanceof Error && error.message.includes("404")) {
+        console.log("Job not found (404), stopping polling - backend may have cleaned up job");
         return false;
       }
+      // Retry up to 3 times for other errors
       return failureCount < 3;
     },
   });

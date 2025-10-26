@@ -158,12 +158,23 @@ export default function Home() {
   // Handle job errors
   useEffect(() => {
     if (jobError) {
+      const errorMessage =
+        jobError instanceof Error ? jobError.message : "Unknown error";
+
+      // Provide more helpful error messages
+      let userMessage = errorMessage;
+      if (errorMessage.includes("Job not found")) {
+        userMessage =
+          "The backend processed your video but cleaned up the job too quickly. This might be a backend configuration issue.";
+      } else if (errorMessage.includes("404")) {
+        userMessage =
+          "Job not found - the backend may have cleaned up the job immediately after creation.";
+      }
+
       setProgress({
         stage: "error",
         progress: 0,
-        message: `Status check failed: ${
-          jobError instanceof Error ? jobError.message : "Unknown error"
-        }`,
+        message: userMessage,
       });
       setIsProcessing(false);
     }
