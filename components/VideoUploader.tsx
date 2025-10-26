@@ -83,7 +83,7 @@ export function VideoUploader({ onVideoSelect }: VideoUploaderProps) {
 
   const handleFileInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
+      const file = e.target.files && e.target.files[0];
       if (file) {
         handleFileSelect(file);
       }

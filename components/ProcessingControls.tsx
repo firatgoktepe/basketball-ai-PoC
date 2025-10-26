@@ -4,9 +4,14 @@ import { useState } from "react";
 import { Play, Settings, Zap } from "lucide-react";
 import { Tooltip, LabelWithTooltip } from "@/components/ui/Tooltip";
 import { HelpText } from "@/components/ui/HelpText";
+import UploadOptimization from "./UploadOptimization";
 
 interface ProcessingControlsProps {
-  onStartAnalysis: () => void;
+  onStartAnalysis: (optimizationSettings?: {
+    compress: boolean;
+    quality: number;
+    maxResolution: number;
+  }) => void;
   disabled?: boolean;
 }
 
@@ -14,8 +19,14 @@ export function ProcessingControls({
   onStartAnalysis,
   disabled = false,
 }: ProcessingControlsProps) {
+  const [optimizationSettings, setOptimizationSettings] = useState({
+    compress: true,
+    quality: 0.7,
+    maxResolution: 1280,
+  });
+
   const handleStartAnalysis = () => {
-    onStartAnalysis();
+    onStartAnalysis(optimizationSettings);
   };
 
   const getEstimatedTime = () => {
@@ -46,6 +57,14 @@ export function ProcessingControls({
             NBAction (YOLO) for score detection. Estimated processing time: ~
             {getEstimatedTime()}x video duration.
           </p>
+        </div>
+
+        {/* Upload Optimization Settings */}
+        <div className="pt-4">
+          <UploadOptimization
+            onOptimizationChange={setOptimizationSettings}
+            defaultSettings={optimizationSettings}
+          />
         </div>
 
         {/* Start Analysis Button */}

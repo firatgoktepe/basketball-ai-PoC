@@ -55,40 +55,67 @@ export default function Home() {
     }
   }, []);
 
-  const handleStartAnalysis = useCallback(async () => {
-    if (!videoFile) return;
+  const handleStartAnalysis = useCallback(
+    async (optimizationSettings?: {
+      compress: boolean;
+      quality: number;
+      maxResolution: number;
+    }) => {
+      if (!videoFile) return;
 
-    setIsProcessing(true);
-    setProgress({
-      stage: "initializing",
-      progress: 0,
-      message: "Uploading video to backend...",
-    });
-
-    try {
-      // Upload video to backend
-      const uploadResult = await uploadMutation.mutateAsync(videoFile.file);
-      console.log("Upload result:", uploadResult);
-      console.log("Setting job ID:", uploadResult.job_id);
-      setJobId(uploadResult.job_id);
-
+      setIsProcessing(true);
       setProgress({
-        stage: "processing",
-        progress: 20,
-        message: "Video uploaded, processing started...",
+        stage: "initializing",
+        progress: 10,
+        message: "Preparing video for upload...",
       });
-    } catch (error) {
-      console.error("Upload failed:", error);
-      setProgress({
-        stage: "error",
-        progress: 0,
-        message: `Upload failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-      });
-      setIsProcessing(false);
-    }
-  }, [videoFile, uploadMutation]);
+
+      try {
+        const uploadResult = await uploadMutation.mutateAsync({
+          file: videoFile.file,
+          options: {
+            compress:
+              optimizationSettings &&
+              optimizationSettings.compress !== undefined
+                ? optimizationSettings.compress
+                : true,
+            quality:
+              optimizationSettings && optimizationSettings.quality !== undefined
+                ? optimizationSettings.quality
+                : 0.7,
+            onProgress: (progress) => {
+              setProgress({
+                stage: "initializing",
+                progress: 10 + progress * 0.1, // 10-20% for upload
+                message: `Uploading video... ${Math.round(progress)}%`,
+              });
+            },
+          },
+        });
+
+        console.log("Upload result:", uploadResult);
+        console.log("Setting job ID:", uploadResult.job_id);
+        setJobId(uploadResult.job_id);
+
+        setProgress({
+          stage: "processing",
+          progress: 20,
+          message: "Video uploaded, processing started...",
+        });
+      } catch (error) {
+        console.error("Upload failed:", error);
+        setProgress({
+          stage: "error",
+          progress: 0,
+          message: `Upload failed: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+        });
+        setIsProcessing(false);
+      }
+    },
+    [videoFile, uploadMutation]
+  );
 
   // Handle job status updates
   useEffect(() => {
@@ -98,35 +125,20 @@ export default function Home() {
       setProgress({
         stage: "completed",
         progress: 100,
-        message: "Analysis completed! Downloading processed video...",
+        message: "Analysis completed! Results ready.",
       });
 
-      // Download processed video
-      downloadMutation.mutate(jobId!, {
-        onSuccess: (videoBlob) => {
-          const videoUrl = URL.createObjectURL(videoBlob);
-          setProcessedVideoUrl(videoUrl);
+      // Display results directly from job status (no automatic download)
+      // Use original video URL for playback, processed video available for download
+      setProcessedVideoUrl(null); // Will use original video for playback
 
-          // Transform backend data to frontend format
-          const transformedData = transformBackendData(
-            jobStatus.results!,
-            videoUrl
-          );
-          setGameData(transformedData);
-          setIsProcessing(false);
-        },
-        onError: (error) => {
-          console.error("Download failed:", error);
-          setProgress({
-            stage: "error",
-            progress: 0,
-            message: `Download failed: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
-          });
-          setIsProcessing(false);
-        },
-      });
+      // Transform backend data to frontend format
+      const transformedData = transformBackendData(
+        jobStatus.results!,
+        null // No processed video URL initially
+      );
+      setGameData(transformedData);
+      setIsProcessing(false);
     } else if (jobStatus.status === "failed") {
       setProgress({
         stage: "error",
@@ -141,7 +153,7 @@ export default function Home() {
         message: "Backend is analyzing video...",
       });
     }
-  }, [jobStatus, jobId, downloadMutation]);
+  }, [jobStatus, jobId]);
 
   // Handle job errors
   useEffect(() => {

@@ -110,7 +110,7 @@ export interface CropRegion {
 // Data transformation function for backend results
 export function transformBackendData(
   backendResults: any,
-  videoUrl: string
+  videoUrl: string | null
 ): GameData {
   return {
     video: {

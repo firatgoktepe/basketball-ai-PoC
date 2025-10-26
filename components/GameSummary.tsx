@@ -13,7 +13,7 @@ export function GameSummary({ gameData }: GameSummaryProps) {
 
   const getTeamColor = (teamId: string) => {
     const team = gameData.teams.find((t) => t.id === teamId);
-    return team?.color || "#6b7280";
+    return (team && team.color) || "#6b7280";
   };
 
   const getEventCount = (eventType: string) => {

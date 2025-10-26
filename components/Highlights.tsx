@@ -323,10 +323,12 @@ export function Highlights({
             <Target className="w-4 h-4 text-primary" />
             <span className="font-medium">
               Filtered by Player #{selectedPlayer.playerId} (
-              {
-                gameData.teams.find((t) => t.id === selectedPlayer.teamId)
-                  ?.label
-              }
+              {(() => {
+                const team = gameData.teams.find(
+                  (t) => t.id === selectedPlayer.teamId
+                );
+                return (team && team.label) || "Unknown";
+              })()}
               )
             </span>
           </div>
@@ -460,7 +462,8 @@ export function Highlights({
               (t) => t.id === highlight.event.teamId
             );
             const isSelected =
-              selectedHighlight?.event.id === highlight.event.id;
+              (selectedHighlight && selectedHighlight.event.id) ===
+              highlight.event.id;
 
             return (
               <div

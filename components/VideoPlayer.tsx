@@ -110,7 +110,9 @@ export function VideoPlayer({
         src: videoRef.current.src,
       });
       setDuration(videoDuration);
-      onDurationChange?.(videoDuration);
+      if (onDurationChange) {
+        onDurationChange(videoDuration);
+      }
       setShowQualityCheck(true);
     }
   }, [onDurationChange]);
@@ -131,7 +133,11 @@ export function VideoPlayer({
       console.error("❌ Video error details:", errorDetails);
 
       // Show error to user
-      alert(`Video loading error: ${target.error?.message || "Unknown error"}`);
+      alert(
+        `Video loading error: ${
+          (target.error && target.error.message) || "Unknown error"
+        }`
+      );
     },
     []
   );

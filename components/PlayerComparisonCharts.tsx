@@ -30,7 +30,8 @@ export function PlayerComparisonCharts({
     > = [];
 
     gameData.teams.forEach((team) => {
-      const teamPlayers = gameData.summary[team.id]?.players || [];
+      const teamPlayers =
+        (gameData.summary[team.id] && gameData.summary[team.id].players) || [];
       const topTeamPlayers = teamPlayers
         .sort((a, b) => b.points - a.points)
         .slice(0, 3)
@@ -50,7 +51,7 @@ export function PlayerComparisonCharts({
     return topPlayers.map((player) => {
       const team = gameData.teams.find((t) => t.id === player.teamId);
       return {
-        name: `#${player.playerId} (${team?.label || "Unknown"})`,
+        name: `#${player.playerId} (${(team && team.label) || "Unknown"})`,
         Points: player.points,
         Assists: player.assists,
         Rebounds: player.offRebounds + player.defRebounds,
@@ -65,7 +66,7 @@ export function PlayerComparisonCharts({
     return topPlayers.map((player) => {
       const team = gameData.teams.find((t) => t.id === player.teamId);
       return {
-        name: `#${player.playerId} (${team?.label || "Unknown"})`,
+        name: `#${player.playerId} (${(team && team.label) || "Unknown"})`,
         "2-Point": player.twoPointScores * 2,
         "3-Point": player.threePointScores * 3,
         "Foul Shots": player.foulShots * 1,

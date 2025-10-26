@@ -271,7 +271,7 @@ export function EventTimeline({
 
               // Create enhanced tooltip with shot type info
               let tooltipText = `${event.type.replace("_", " ")} - ${
-                team?.label
+                (team && team.label) || "Unknown"
               } at ${formatTime(event.timestamp)}`;
               if (event.type === "score") {
                 tooltipText += ` (+${event.scoreDelta}${
@@ -295,7 +295,9 @@ export function EventTimeline({
                       className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
                         isSelected ? "ring-2 ring-yellow-400" : ""
                       }`}
-                      style={{ backgroundColor: team?.color }}
+                      style={{
+                        backgroundColor: (team && team.color) || "#6b7280",
+                      }}
                     />
                     {/* Shot type indicator for score events */}
                     {event.type === "score" && event.shotType && (
@@ -360,7 +362,8 @@ export function EventTimeline({
                         )}
                       </div>
                       <div className="text-sm opacity-75">
-                        {team?.label} • {formatTime(event.timestamp)}
+                        {(team && team.label) || "Unknown"} •{" "}
+                        {formatTime(event.timestamp)}
                       </div>
                     </div>
                   </div>
@@ -404,8 +407,12 @@ export function EventTimeline({
                   <div>
                     <span className="text-muted-foreground">Team:</span>
                     <span className="ml-2">
-                      {gameData.teams.find((t) => t.id === event.teamId)
-                        ?.label || "Unknown"}
+                      {(() => {
+                        const team = gameData.teams.find(
+                          (t) => t.id === event.teamId
+                        );
+                        return (team && team.label) || "Unknown";
+                      })()}
                     </span>
                   </div>
                   <div>

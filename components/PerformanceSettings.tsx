@@ -28,10 +28,13 @@ export function PerformanceSettings({
         setMetrics(detectedMetrics);
 
         // Notify parent of recommended settings
-        onRecommendedSettingsDetected?.({
-          samplingRate: detectedMetrics.recommendedSamplingRate,
-          enableAdvancedFeatures: detectedMetrics.shouldEnableAdvancedFeatures,
-        });
+        if (onRecommendedSettingsDetected) {
+          onRecommendedSettingsDetected({
+            samplingRate: detectedMetrics.recommendedSamplingRate,
+            enableAdvancedFeatures:
+              detectedMetrics.shouldEnableAdvancedFeatures,
+          });
+        }
       } catch (error) {
         console.error("Failed to detect capabilities:", error);
       } finally {
