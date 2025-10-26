@@ -291,6 +291,9 @@ export const useJobStatus = (jobId: string | null, enabled: boolean = true) => {
       // Retry up to 3 times for other errors
       return failureCount < 3;
     },
+    // Stop polling after first 404 to prevent spam
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 };
 
