@@ -220,6 +220,26 @@ export const uploadVideo = async (
   }
 };
 
+// Silent version for immediate checks (doesn't log errors)
+export const getJobStatusSilent = async (
+  jobId: string
+): Promise<BackendJobStatus | null> => {
+  try {
+    const response = await fetch(`/api/status-proxy/${jobId}`);
+
+    if (!response.ok) {
+      // Return null for any error (including 404) - don't log or throw
+      return null;
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    // Return null for any error - don't log or throw
+    return null;
+  }
+};
+
 export const getJobStatus = async (
   jobId: string
 ): Promise<BackendJobStatus> => {
@@ -278,6 +298,7 @@ export const useJobStatus = (jobId: string | null, enabled: boolean = true) => {
       // Stop polling if job is completed or failed
       const data = query.state.data;
       if (data && (data.status === "completed" || data.status === "failed")) {
+        console.log("Job completed/failed, stopping polling");
         return false; // Stop polling
       }
       return 2000; // Poll every 2 seconds

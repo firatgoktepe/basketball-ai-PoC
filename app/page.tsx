@@ -14,6 +14,7 @@ import {
   useUploadVideo,
   useJobStatus,
   useDownloadVideo,
+  getJobStatusSilent,
 } from "@/lib/api/basketball-api";
 import { transformBackendData } from "@/types";
 import type { VideoFile, AnalysisProgress, GameData } from "@/types";
@@ -100,7 +101,45 @@ export default function Home() {
         setProgress({
           stage: "processing",
           progress: 20,
-          message: "Video uploaded, processing started...",
+          message: "Video uploaded, checking status immediately...",
+        });
+
+        // Check status immediately after upload to catch results before cleanup
+        console.log("Checking status immediately after upload...");
+        const immediateStatus = await getJobStatusSilent(uploadResult.job_id);
+
+        if (
+          immediateStatus &&
+          immediateStatus.status === "completed" &&
+          immediateStatus.results
+        ) {
+          console.log(
+            "Backend processed synchronously - caching results immediately"
+          );
+          setProgress({
+            stage: "completed",
+            progress: 100,
+            message: "Analysis completed! Results cached.",
+          });
+
+          // Transform and cache the actual results
+          const transformedData = transformBackendData(
+            immediateStatus.results,
+            null
+          );
+          setGameData(transformedData);
+          setIsProcessing(false);
+          return; // Don't start polling since we have results
+        } else {
+          console.log(
+            "Immediate status check returned null (backend cleaned up job) - continuing with polling"
+          );
+        }
+
+        setProgress({
+          stage: "processing",
+          progress: 30,
+          message: "Backend is analyzing video...",
         });
       } catch (error) {
         console.error("Upload failed:", error);
