@@ -46,77 +46,50 @@ export function Highlights({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Create highlight videos from score events only (backend only provides scores)
+  // Create highlight videos from all events (matching Event tab)
   const allHighlightVideos: HighlightVideo[] = (() => {
-    console.log(
-      `📝 Creating highlights from ${gameData.events.length} score events`
-    );
+    console.log(`📝 Creating highlights from ${gameData.events.length} events`);
 
-    const scoreEvents = gameData.events
-      .filter((event) => event.type === "score")
-      .sort((a, b) => a.timestamp - b.timestamp);
+    const allEvents = gameData.events.sort((a, b) => a.timestamp - b.timestamp);
 
-    console.log(
-      `🎯 ${scoreEvents.length} score events selected for highlights`
-    );
+    console.log(`🎯 ${allEvents.length} events selected for highlights`);
 
-    const created = scoreEvents
-      .map((event, index) => {
-        // Calculate duration based on time to next event or end of video
-        // Minimum duration: 10 seconds to ensure highlights are viewable
-        const MIN_HIGHLIGHT_DURATION = 10.0;
-        let endTime: number;
+    const created = allEvents.map((event, index) => {
+      // Calculate highlight duration: from previous event to current event
+      let startTime: number;
+      let endTime: number;
 
-        if (index < scoreEvents.length - 1) {
-          // Use time to next event as the end time
-          const nextEvent = scoreEvents[index + 1];
-          const timeToNextEvent = nextEvent.timestamp - event.timestamp;
+      if (index === 0) {
+        // First event: highlight from 0 to this event's timestamp
+        startTime = 0;
+        endTime = event.timestamp;
+      } else {
+        // Subsequent events: highlight from previous event to current event
+        const previousEvent = allEvents[index - 1];
+        startTime = previousEvent.timestamp;
+        endTime = event.timestamp;
+      }
 
-          // Ensure minimum duration by either using time to next event or minimum duration
-          if (timeToNextEvent >= MIN_HIGHLIGHT_DURATION) {
-            endTime = nextEvent.timestamp;
-          } else {
-            // Events are too close, use minimum duration
-            console.log(
-              `⏱️ Events too close (${timeToNextEvent.toFixed(2)}s):`,
-              `${event.type} at ${event.timestamp.toFixed(2)}s,`,
-              `using minimum ${MIN_HIGHLIGHT_DURATION}s duration`
-            );
-            endTime = Math.min(
-              videoFile.duration,
-              event.timestamp + MIN_HIGHLIGHT_DURATION
-            );
-          }
-        } else {
-          // For the last event, use video duration or add a reasonable buffer
-          endTime = Math.min(videoFile.duration, event.timestamp + 10);
-        }
+      const duration = endTime - startTime;
 
-        const startTime = event.timestamp;
-        const duration = endTime - startTime;
+      console.log(
+        `🎬 Highlight ${index + 1}: ${event.type} at ${event.timestamp.toFixed(
+          2
+        )}s,`,
+        `duration: ${startTime.toFixed(2)}s - ${endTime.toFixed(
+          2
+        )}s (${duration.toFixed(2)}s)`
+      );
 
-        return {
-          event,
-          startTime,
-          endTime,
-          duration,
-        };
-      })
-      .filter((highlight) => {
-        const isValid = highlight.duration >= 10.0;
-        if (!isValid) {
-          console.warn(
-            `❌ Filtering out highlight:`,
-            `${highlight.event.type} at ${highlight.startTime.toFixed(2)}s,`,
-            `duration: ${highlight.duration.toFixed(2)}s (minimum: 10.0s)`
-          );
-        }
-        return isValid;
-      });
+      return {
+        event,
+        startTime,
+        endTime,
+        duration,
+      };
+    });
 
-    console.log(
-      `✅ ${created.length} valid highlights created from score events (min 10s duration)`
-    );
+    console.log(`✅ ${created.length} highlights created from all events`);
     return created;
   })();
 
@@ -143,18 +116,59 @@ export function Highlights({
   const getEventIcon = (eventType: string) => {
     switch (eventType) {
       case "score":
+      case "dunk":
+      case "3pt":
         return <Trophy className="w-4 h-4 text-green-600" />;
+      case "shot_attempt":
+      case "missed_shot":
+      case "foul_shot":
+        return <Target className="w-4 h-4 text-blue-600" />;
+      case "layup":
+        return <Trophy className="w-4 h-4 text-green-500" />;
+      case "offensive_rebound":
+      case "defensive_rebound":
+        return <RotateCcw className="w-4 h-4 text-orange-600" />;
+      case "block":
+      case "steal":
+        return <AlertTriangle className="w-4 h-4 text-red-600" />;
+      case "assist":
+      case "pass":
+        return <RotateCcw className="w-4 h-4 text-blue-600" />;
+      case "turnover":
+        return <AlertTriangle className="w-4 h-4 text-orange-500" />;
+      case "dribble":
+        return <Target className="w-4 h-4 text-gray-500" />;
       default:
-        return <Trophy className="w-4 h-4 text-green-600" />;
+        return <Target className="w-4 h-4 text-gray-600" />;
     }
   };
 
   const getEventColor = (eventType: string) => {
     switch (eventType) {
       case "score":
+      case "dunk":
+      case "3pt":
+      case "layup":
         return "bg-green-50 border-green-200 text-green-800";
+      case "shot_attempt":
+      case "missed_shot":
+      case "foul_shot":
+        return "bg-blue-50 border-blue-200 text-blue-800";
+      case "offensive_rebound":
+      case "defensive_rebound":
+        return "bg-orange-50 border-orange-200 text-orange-800";
+      case "block":
+      case "steal":
+        return "bg-red-50 border-red-200 text-red-800";
+      case "assist":
+      case "pass":
+        return "bg-blue-50 border-blue-200 text-blue-800";
+      case "turnover":
+        return "bg-orange-50 border-orange-200 text-orange-800";
+      case "dribble":
+        return "bg-gray-50 border-gray-200 text-gray-800";
       default:
-        return "bg-green-50 border-green-200 text-green-800";
+        return "bg-gray-50 border-gray-200 text-gray-800";
     }
   };
 
@@ -323,10 +337,12 @@ export function Highlights({
             <Target className="w-4 h-4 text-primary" />
             <span className="font-medium">
               Filtered by Player #{selectedPlayer.playerId} (
-              {
-                gameData.teams.find((t) => t.id === selectedPlayer.teamId)
-                  ?.label
-              }
+              {(() => {
+                const team = gameData.teams.find(
+                  (t) => t.id === selectedPlayer.teamId
+                );
+                return (team && team.label) || "Unknown";
+              })()}
               )
             </span>
           </div>
@@ -460,7 +476,8 @@ export function Highlights({
               (t) => t.id === highlight.event.teamId
             );
             const isSelected =
-              selectedHighlight?.event.id === highlight.event.id;
+              (selectedHighlight && selectedHighlight.event.id) ===
+              highlight.event.id;
 
             return (
               <div

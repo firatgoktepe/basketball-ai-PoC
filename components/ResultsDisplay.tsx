@@ -29,12 +29,16 @@ interface ResultsDisplayProps {
   gameData: GameData;
   videoFile: VideoFile;
   isRealAnalysis?: boolean;
+  jobId?: string | null;
+  processedVideoUrl?: string | null;
 }
 
 export function ResultsDisplay({
   gameData,
   videoFile,
   isRealAnalysis = true,
+  jobId,
+  processedVideoUrl,
 }: ResultsDisplayProps) {
   const [activeTab, setActiveTab] = useState<
     "summary" | "timeline" | "highlights" | "charts" | "events" | "players"
@@ -87,7 +91,10 @@ export function ResultsDisplay({
       event.timestamp.toFixed(1),
       formatTime(event.timestamp),
       event.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-      gameData.teams.find((t) => t.id === event.teamId)?.label || "Unknown",
+      (() => {
+        const team = gameData.teams.find((t) => t.id === event.teamId);
+        return (team && team.label) || "Unknown";
+      })(),
       event.scoreDelta || "",
       (event.confidence * 100).toFixed(1),
       event.source,
@@ -184,7 +191,7 @@ export function ResultsDisplay({
       if (event.scoreDelta) {
         report += ` (+${event.scoreDelta})`;
       }
-      report += ` (${team?.label || "Unknown"}) - ${(
+      report += ` (${(team && team.label) || "Unknown"}) - ${(
         event.confidence * 100
       ).toFixed(1)}%\n`;
     });
@@ -346,7 +353,12 @@ export function ResultsDisplay({
           )}
 
           {activeTab === "timeline" && (
-            <EventTimeline gameData={gameData} videoFile={videoFile} />
+            <EventTimeline
+              gameData={gameData}
+              videoFile={videoFile}
+              jobId={jobId}
+              processedVideoUrl={processedVideoUrl}
+            />
           )}
 
           {activeTab === "highlights" && (

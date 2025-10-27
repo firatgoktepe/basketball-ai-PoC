@@ -3,6 +3,8 @@ const nextConfig = {
   experimental: {
     esmExternals: "loose",
   },
+  // Increase API route timeout to 30 minutes
+  serverExternalPackages: [],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {

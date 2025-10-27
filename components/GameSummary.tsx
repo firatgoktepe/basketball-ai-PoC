@@ -13,7 +13,7 @@ export function GameSummary({ gameData }: GameSummaryProps) {
 
   const getTeamColor = (teamId: string) => {
     const team = gameData.teams.find((t) => t.id === teamId);
-    return team?.color || "#6b7280";
+    return (team && team.color) || "#6b7280";
   };
 
   const getEventCount = (eventType: string) => {
@@ -41,7 +41,7 @@ export function GameSummary({ gameData }: GameSummaryProps) {
               className="w-4 h-4 rounded-full"
               style={{ backgroundColor: getTeamColor(team.id) }}
             />
-            <h3 className="text-lg font-semibold">{team.label}</h3>
+            <h3 className="text-lg font-semibold">Teams</h3>
           </div>
 
           <div className="space-y-3">

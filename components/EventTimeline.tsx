@@ -16,11 +16,13 @@ import {
 } from "lucide-react";
 import type { GameData, VideoFile } from "@/types";
 import { usePlayerFilter } from "./PlayerFilterContext";
+import { useDownloadVideo } from "@/lib/api/basketball-api";
 
 interface EventTimelineProps {
   gameData: GameData;
   videoFile: VideoFile;
-  processedVideoUrl?: string;
+  processedVideoUrl?: string | null;
+  jobId?: string | null;
   onSeekToTime?: (time: number) => void;
 }
 
@@ -28,6 +30,7 @@ export function EventTimeline({
   gameData,
   videoFile,
   processedVideoUrl,
+  jobId,
   onSeekToTime,
 }: EventTimelineProps) {
   const { selectedPlayer, clearFilter } = usePlayerFilter();
@@ -36,6 +39,7 @@ export function EventTimeline({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const downloadMutation = useDownloadVideo();
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -117,6 +121,32 @@ export function EventTimeline({
       handleSeek(newTime);
     }
   }, [currentTime, duration, handleSeek]);
+
+  const handleDownload = useCallback(async () => {
+    if (!jobId) {
+      console.error("No job ID available for download");
+      return;
+    }
+
+    try {
+      console.log("Starting download for job:", jobId);
+      const blob = await downloadMutation.mutateAsync(jobId);
+
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `processed_${videoFile.name}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      console.log("Download completed successfully");
+    } catch (error) {
+      console.error("Download failed:", error);
+    }
+  }, [jobId, downloadMutation, videoFile.name]);
 
   // Update current time as video plays
   useEffect(() => {
@@ -240,16 +270,18 @@ export function EventTimeline({
       </div>
 
       {/* Download Button */}
-      {processedVideoUrl && (
+      {jobId && (
         <div className="flex justify-center">
-          <a
-            href={processedVideoUrl}
-            download={`processed_${videoFile.name}`}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          <button
+            onClick={handleDownload}
+            disabled={downloadMutation.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="w-4 h-4" />
-            Download Processed Video
-          </a>
+            {downloadMutation.isPending
+              ? "Downloading..."
+              : "Download Processed Video"}
+          </button>
         </div>
       )}
 
@@ -271,7 +303,7 @@ export function EventTimeline({
 
               // Create enhanced tooltip with shot type info
               let tooltipText = `${event.type.replace("_", " ")} - ${
-                team?.label
+                (team && team.label) || "Unknown"
               } at ${formatTime(event.timestamp)}`;
               if (event.type === "score") {
                 tooltipText += ` (+${event.scoreDelta}${
@@ -295,7 +327,9 @@ export function EventTimeline({
                       className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
                         isSelected ? "ring-2 ring-yellow-400" : ""
                       }`}
-                      style={{ backgroundColor: team?.color }}
+                      style={{
+                        backgroundColor: (team && team.color) || "#6b7280",
+                      }}
                     />
                     {/* Shot type indicator for score events */}
                     {event.type === "score" && event.shotType && (
@@ -360,7 +394,8 @@ export function EventTimeline({
                         )}
                       </div>
                       <div className="text-sm opacity-75">
-                        {team?.label} • {formatTime(event.timestamp)}
+                        {(team && team.label) || "Unknown"} •{" "}
+                        {formatTime(event.timestamp)}
                       </div>
                     </div>
                   </div>
@@ -404,8 +439,12 @@ export function EventTimeline({
                   <div>
                     <span className="text-muted-foreground">Team:</span>
                     <span className="ml-2">
-                      {gameData.teams.find((t) => t.id === event.teamId)
-                        ?.label || "Unknown"}
+                      {(() => {
+                        const team = gameData.teams.find(
+                          (t) => t.id === event.teamId
+                        );
+                        return (team && team.label) || "Unknown";
+                      })()}
                     </span>
                   </div>
                   <div>

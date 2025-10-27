@@ -197,10 +197,12 @@ export function EventList({
             <Target className="w-4 h-4 text-primary" />
             <span className="font-medium">
               Filtered by Player #{selectedPlayer.playerId} (
-              {
-                gameData.teams.find((t) => t.id === selectedPlayer.teamId)
-                  ?.label
-              }
+              {(() => {
+                const team = gameData.teams.find(
+                  (t) => t.id === selectedPlayer.teamId
+                );
+                return (team && team.label) || "Unknown";
+              })()}
               )
             </span>
           </div>
@@ -297,7 +299,8 @@ export function EventList({
                       )}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {team?.label} • {formatTime(event.timestamp)}
+                      {(team && team.label) || "Unknown"} •{" "}
+                      {formatTime(event.timestamp)}
                     </div>
                   </div>
                 </div>
