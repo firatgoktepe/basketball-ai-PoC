@@ -50,7 +50,10 @@ export function ProgressIndicator({ progress }: ProgressIndicatorProps) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div
+      className="max-w-2xl mx-auto"
+      data-error-indicator={progress.stage === "error" ? "true" : undefined}
+    >
       <div className="bg-card border rounded-lg p-6 space-y-6">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
