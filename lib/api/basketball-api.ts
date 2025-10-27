@@ -149,6 +149,18 @@ const compressVideo = async (file: File, quality: number = 0.7, maxResolution: n
   });
 };
 
+// Custom error types for better error handling
+export class UploadError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+    public userMessage: string
+  ) {
+    super(message);
+    this.name = "UploadError";
+  }
+}
+
 // Upload via proxy (always use proxy to avoid CORS issues)
 const uploadViaProxy = async (
   file: File,
@@ -171,7 +183,27 @@ const uploadViaProxy = async (
   if (!response.ok) {
     const errorText = await response.text();
     console.error("Upload failed:", errorText);
-    throw new Error(`Upload failed: ${response.statusText} - ${errorText}`);
+
+    // Handle specific status codes with user-friendly messages
+    if (response.status === 500) {
+      throw new UploadError(
+        `Server error: ${response.statusText} - ${errorText}`,
+        500,
+        "A server error occurred. Please try again later."
+      );
+    } else if (response.status === 413) {
+      throw new UploadError(
+        `File too large: ${response.statusText} - ${errorText}`,
+        413,
+        "The file size you are trying to upload is too large. Please compress your video more and lower its resolution and try again."
+      );
+    } else {
+      throw new UploadError(
+        `Upload failed: ${response.statusText} - ${errorText}`,
+        response.status,
+        `Upload failed: ${response.statusText}`
+      );
+    }
   }
 
   return response.json();
@@ -285,6 +317,7 @@ export const useUploadVideo = () => {
       uploadVideo(file, options),
     onError: (error) => {
       console.error("Video upload failed:", error);
+      // The error will be handled by the component using the mutation
     },
   });
 };

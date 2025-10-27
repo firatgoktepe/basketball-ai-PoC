@@ -15,6 +15,7 @@ import {
   useJobStatus,
   useDownloadVideo,
   getJobStatusSilent,
+  UploadError,
 } from "@/lib/api/basketball-api";
 import { transformBackendData } from "@/types";
 import type { VideoFile, AnalysisProgress, GameData } from "@/types";
@@ -143,13 +144,23 @@ export default function Home() {
         });
       } catch (error) {
         console.error("Upload failed:", error);
-        setProgress({
-          stage: "error",
-          progress: 0,
-          message: `Upload failed: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`,
-        });
+
+        // Handle custom UploadError with user-friendly messages
+        if (error instanceof UploadError) {
+          setProgress({
+            stage: "error",
+            progress: 0,
+            message: error.userMessage,
+          });
+        } else {
+          setProgress({
+            stage: "error",
+            progress: 0,
+            message: `Upload failed: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+          });
+        }
         setIsProcessing(false);
       }
     },
