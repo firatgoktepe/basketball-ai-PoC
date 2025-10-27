@@ -339,11 +339,12 @@ export default function Home() {
                 )}
 
                 {/* Progress Indicator */}
-                {isProcessing && progress && (
-                  <div className="max-w-2xl mx-auto px-4">
-                    <ProgressIndicator progress={progress} />
-                  </div>
-                )}
+                {(isProcessing || (progress && progress.stage === "error")) &&
+                  progress && (
+                    <div className="max-w-2xl mx-auto px-4">
+                      <ProgressIndicator progress={progress} />
+                    </div>
+                  )}
 
                 {/* Results Display */}
                 {gameData && (

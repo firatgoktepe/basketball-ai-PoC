@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, RotateCcw } from "lucide-react";
 import type { AnalysisProgress } from "@/types";
 
 interface ProgressIndicatorProps {
@@ -126,6 +126,22 @@ export function ProgressIndicator({ progress }: ProgressIndicatorProps) {
           <div className="text-xs text-muted-foreground text-center">
             Processing is running in the background. You can continue using the
             interface.
+          </div>
+        )}
+
+        {/* Error Actions */}
+        {progress.stage === "error" && (
+          <div className="text-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Try Again
+            </button>
+            <p className="text-xs text-muted-foreground mt-2">
+              Click to refresh the page and try uploading again
+            </p>
           </div>
         )}
       </div>
