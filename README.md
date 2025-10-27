@@ -1,25 +1,28 @@
-# Basketball Quick Stats
+# Basketball Score Analyzer Frontend
 
-AI-powered amateur basketball game analysis tool for extracting player statistics and highlights from video footage.
+AI-powered basketball game analysis tool that processes video footage through a backend API to extract comprehensive player statistics, game events, and generate highlight videos.
 
 ## Features
 
-- **Video Analysis**: Upload MP4 videos of amateur basketball games and extract comprehensive statistics
-- **Player Tracking**: Detect and track individual players by jersey number
-- **Visual Score Detection**: Automatically detect scores by tracking ball movement through the hoop
-- **Action Recognition**: Identify shots, dunks, blocks, passes, assists, rebounds, and more
-- **Per-Player Statistics**: Track detailed stats for each player including points, hit rate, assists, blocks
-- **Highlight Generation**: Auto-create highlight clips of key moments (dunks, 3-pointers, blocks, etc.)
-- **Interactive Timeline**: Click on events to seek to specific moments in the video
-- **Data Export**: Export team and player statistics as JSON or CSV files
+- **Backend API Integration**: Seamless integration with basketball analysis backend API
+- **Video Upload & Processing**: Upload MP4 videos for AI-powered analysis with real-time progress tracking
+- **Comprehensive Event Detection**: Automatically detect scores, shots, rebounds, assists, blocks, and other basketball events
+- **Interactive Timeline**: Visual timeline with clickable events that seek to specific moments in the video
+- **Event-Based Highlights**: Generate individual highlight videos for each detected event with proper timeframes
+- **Player Filtering**: Filter events and statistics by specific players across different teams
+- **Statistical Charts**: Interactive charts showing score progression, confidence distribution, and event frequency
+- **Processed Video Download**: Download the analyzed video with overlays and annotations
+- **Real-time Status Updates**: Live progress tracking during video analysis
+- **Responsive Design**: Optimized for desktop and mobile viewing
 
 ## Technology Stack
 
 - **Frontend**: Next.js 15, React 19, TypeScript
-- **AI/ML**: TensorFlow.js, MediaPipe, Tesseract.js
-- **Charts**: Recharts for data visualization
-- **Processing**: Web Workers for heavy computation
-- **Styling**: Tailwind CSS
+- **Backend Integration**: RESTful API integration with job-based processing
+- **Charts & Visualization**: Recharts for interactive data visualization
+- **State Management**: React Query for API state management and caching
+- **UI Components**: Custom components with Tailwind CSS styling
+- **Video Processing**: HTML5 video player with custom controls and timeline integration
 
 ## Getting Started
 
@@ -39,116 +42,109 @@ AI-powered amateur basketball game analysis tool for extracting player statistic
 
 ## Usage
 
-1. **Upload Video**: Select an MP4 video file of an amateur basketball game (up to 500MB)
-2. **Configure Analysis**: Choose sampling rate and enable features:
-   - Ball Detection: Track ball movement and trajectory
-   - Pose Estimation: Analyze player body poses for action recognition
-   - Jersey Number Detection: Identify individual players
-   - 3-Point Line Detection: Distinguish 2-point from 3-point shots
-3. **Start Analysis**: The system will:
-   - Detect and track all players throughout the video
-   - Identify jersey numbers for per-player statistics
-   - Track the ball and detect when it goes through the hoop
-   - Recognize actions: shots, dunks, blocks, passes, assists, layups, etc.
-   - Generate highlight clips of key moments
-4. **Review Results**:
-   - View team and per-player statistics
-   - Watch auto-generated highlight clips
-   - Explore timeline with all detected events
-   - Filter events by player or action type
-5. **Export Data**: Download comprehensive statistics as JSON or CSV
+1. **Upload Video**: Select an MP4 video file of a basketball game for analysis
+2. **Start Processing**: The video is uploaded to the backend API for AI analysis
+3. **Monitor Progress**: Watch real-time progress updates as the video is processed
+4. **Explore Results**: Once analysis is complete, explore the results through multiple tabs:
+   - **Summary**: Overview of game statistics and team performance
+   - **Timeline**: Interactive timeline with video player and event markers
+   - **Highlights**: Individual highlight videos for each detected event
+   - **Charts**: Statistical visualizations and data analysis
+   - **Events**: Detailed list of all detected events with filtering options
+   - **Players**: Player-specific analysis and statistics
+5. **Download Results**: Download the processed video with analysis overlays
+6. **Filter & Analyze**: Use player filters to focus on specific players or teams
 
-## Recommended Video Quality (Amateur Videos)
+## Recommended Video Quality
 
-- **Resolution**: 1080p recommended (720p minimum) for jersey number detection
-- **Camera Setup**: Use tripod or stable mount showing full court and hoop
-- **Hoop Visibility**: Basketball hoop must be clearly visible in frame for score detection
-- **Lighting**: Good lighting helps with player detection and jersey recognition
+- **Resolution**: 1080p recommended for optimal analysis results
+- **Camera Setup**: Stable camera position showing full court and basketball hoop
+- **Hoop Visibility**: Basketball hoop must be clearly visible for accurate score detection
+- **Lighting**: Good lighting improves player detection and event recognition
 - **Camera Angle**: Side-court or elevated view capturing full court preferred
-- **Duration**: 2-10 minutes for best results
+- **Duration**: 2-10 minutes for best processing results
 - **Video Quality**: Avoid excessive compression, motion blur, or camera shake
 
 ## Architecture
 
-The application uses a client-side processing approach:
+The application uses a modern frontend architecture with backend API integration:
 
-- **Main Thread**: UI components and user interaction
-- **Web Workers**: Heavy AI/ML processing (person detection, OCR, pose estimation)
-- **Models**: Pre-trained models for object detection and pose estimation
-- **Event Fusion**: Rule-based system to combine detection results into game events
+- **Frontend**: Next.js React application with TypeScript
+- **API Integration**: RESTful API calls for video upload, processing status, and result retrieval
+- **State Management**: React Query for efficient API state management and caching
+- **Component Structure**: Modular components for different analysis views (Timeline, Charts, Events, etc.)
+- **Real-time Updates**: Polling-based status updates during video processing
+- **Video Player**: Custom HTML5 video player with timeline integration and event markers
 
 ## Development Status
 
 Current implementation includes:
 
-- ✅ Basic UI and video player
-- ✅ Video upload and frame extraction
-- ✅ Processing controls and progress tracking
-- ✅ Player detection and team clustering
-- ✅ Visual score detection (ball-through-hoop tracking)
-- ✅ Jersey number detection and player tracking
-- ✅ Enhanced action recognition (blocks, dunks, passes, assists, layups, etc.)
-- ✅ Per-player statistics generation
-- ✅ Highlight clip extraction and filtering
-- ✅ Results display with charts and timeline
-- ✅ Tooltips and help system
-- ✅ Video quality checker
-- ✅ Performance monitoring
-- ✅ Test infrastructure and evaluation framework
-- 🚧 Camera calibration for improved 3-point detection (in progress)
-- 🚧 Advanced player re-identification algorithms (in progress)
+- ✅ **Video Upload & Processing**: Complete video upload with backend API integration
+- ✅ **Real-time Progress Tracking**: Live status updates during video analysis
+- ✅ **Interactive Timeline**: Video player with clickable event markers and timeline visualization
+- ✅ **Event-Based Highlights**: Individual highlight videos for each detected event with proper timeframes
+- ✅ **Comprehensive Event Detection**: Support for scores, shots, rebounds, assists, blocks, and more
+- ✅ **Player Filtering System**: Filter events and statistics by specific players
+- ✅ **Statistical Charts**: Interactive charts for score progression, confidence distribution, and event frequency
+- ✅ **Processed Video Download**: Download analyzed videos with overlays via API
+- ✅ **Responsive UI**: Modern, mobile-friendly interface with Tailwind CSS
+- ✅ **Error Handling**: Comprehensive error handling and user feedback
+- ✅ **TypeScript Integration**: Full type safety throughout the application
+- ✅ **React Query Integration**: Efficient API state management and caching
 
-## Testing
+## Key Components
 
-The application includes a comprehensive testing framework for evaluating detection accuracy:
+### Core Components
 
-### Running Tests
+- **VideoUploader**: Handles video file selection and upload to backend API
+- **ProcessingControls**: Manages video processing initiation and progress tracking
+- **ProgressIndicator**: Real-time progress updates during video analysis
+- **ResultsDisplay**: Main results interface with tabbed navigation
 
-```bash
-# Run test evaluation suite
-npm run test:eval
+### Analysis Views
 
-# Run with specific configuration
-npm run test:eval -- --verbose
-```
+- **GameSummary**: Overview of game statistics and team performance
+- **EventTimeline**: Interactive timeline with video player and event markers
+- **Highlights**: Event-based highlight video generation and playback
+- **StatisticsCharts**: Interactive charts and data visualizations
+- **EventList**: Detailed event listing with filtering and editing capabilities
+- **PlayerBasedAnalysis**: Player-specific statistics and analysis
 
-### Test Coverage
+### Utility Components
 
-- **Annotated test clips** with ground truth data (amateur basketball footage)
-- **Accuracy metrics**: Precision, recall, F1 scores for all event types
-- **Performance benchmarks**: Processing time and memory usage
-- **Quality thresholds**:
-  - Visual score detection ≥70%
-  - Team attribution ≥80%
-  - Action detection (shots, rebounds, blocks, etc.) ≥60-70%
-  - Jersey number recognition ≥75% when visible
-
-See [TESTING.md](./TESTING.md) for detailed testing documentation.
+- **PlayerFilterContext**: Global player filtering system
+- **ErrorBoundary**: Comprehensive error handling and user feedback
+- **HelpDialog**: User assistance and documentation
 
 ## Performance
 
-The application is optimized for client-side processing:
+The application is optimized for efficient frontend performance:
 
-- **Web Workers** isolate heavy computation from UI thread
-- **Lazy model loading** reduces initial bundle size
-- **Device capability detection** auto-adjusts settings
-- **Quality checker** warns about suboptimal footage
-- **Configurable sampling rates** balance accuracy vs. speed
+- **React Query**: Efficient API state management with automatic caching and background updates
+- **Lazy Loading**: Components and data loaded on demand
+- **Responsive Design**: Optimized for all screen sizes and devices
+- **Error Boundaries**: Graceful error handling without breaking the user experience
+- **TypeScript**: Compile-time error checking and better development experience
+- **Modern React**: Uses React 19 with latest features and optimizations
 
-### Performance Targets
+### Performance Features
 
-- Process 2-minute 1080p clip at 1 FPS without freezing UI
-- Models loaded lazily on demand
-- Responsive design for all screen sizes
-- Export functionality works for large datasets
+- Real-time progress updates without blocking the UI
+- Efficient video player with custom controls and timeline integration
+- Smooth transitions between different analysis views
+- Optimized chart rendering with Recharts
+- Responsive video player that adapts to different screen sizes
 
 ## Help & Documentation
 
-Click the help button (?) in the bottom-right corner of the app for:
+The application includes comprehensive help and documentation:
 
+- **Help Dialog**: Accessible via the help button (?) in the bottom-right corner
 - **Quick Start Guide**: Step-by-step usage instructions
 - **FAQ & Troubleshooting**: Common issues and solutions
 - **Privacy Information**: Data handling and security details
+- **Component Documentation**: Well-documented TypeScript interfaces and components
 
 ## License
 
