@@ -29,12 +29,16 @@ interface ResultsDisplayProps {
   gameData: GameData;
   videoFile: VideoFile;
   isRealAnalysis?: boolean;
+  jobId?: string | null;
+  processedVideoUrl?: string | null;
 }
 
 export function ResultsDisplay({
   gameData,
   videoFile,
   isRealAnalysis = true,
+  jobId,
+  processedVideoUrl,
 }: ResultsDisplayProps) {
   const [activeTab, setActiveTab] = useState<
     "summary" | "timeline" | "highlights" | "charts" | "events" | "players"
@@ -349,7 +353,12 @@ export function ResultsDisplay({
           )}
 
           {activeTab === "timeline" && (
-            <EventTimeline gameData={gameData} videoFile={videoFile} />
+            <EventTimeline
+              gameData={gameData}
+              videoFile={videoFile}
+              jobId={jobId}
+              processedVideoUrl={processedVideoUrl}
+            />
           )}
 
           {activeTab === "highlights" && (

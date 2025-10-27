@@ -341,6 +341,8 @@ export default function Home() {
                       gameData={gameData}
                       videoFile={videoFile}
                       isRealAnalysis={true}
+                      jobId={jobId}
+                      processedVideoUrl={processedVideoUrl}
                     />
                   </div>
                 )}
