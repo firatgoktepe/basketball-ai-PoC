@@ -30,6 +30,13 @@ export function StatisticsCharts({ gameData }: StatisticsChartsProps) {
   const team = gameData.teams[0]; // Single team from backend
   const summary = gameData.summary[team.id];
 
+  // Helper function to format time
+  const formatTime = (timestamp: number) => {
+    const minutes = Math.floor(timestamp / 60);
+    const seconds = Math.floor(timestamp % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
   // Score data processing for backend results
   const scoreEvents = gameData.events.filter((event) => event.type === "score");
 
@@ -111,12 +118,6 @@ export function StatisticsCharts({ gameData }: StatisticsChartsProps) {
       color: "#ef4444",
     },
   ];
-
-  const formatTime = (timestamp: number) => {
-    const minutes = Math.floor(timestamp / 60);
-    const seconds = Math.floor(timestamp % 60);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  };
 
   return (
     <div className="space-y-6">
