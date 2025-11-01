@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { upload } from "@vercel/blob/client";
 
 // Backend API types
 export interface BackendScoreEvent {
@@ -37,12 +38,12 @@ export interface BackendUploadResponse {
 }
 
 // API configuration
-const BACKEND_URL = (
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
-).replace(/\/$/, "");
+const MODAL_API_URL =
+  process.env.NEXT_PUBLIC_MODAL_API_URL ||
+  "https://feanor77ist--basketball-gpu-final-fastapi-app.modal.run";
 
 // Debug: Log the backend URL being used
-console.log("Backend URL:", BACKEND_URL);
+console.log("Modal API URL:", MODAL_API_URL);
 
 // Real video compression using MediaRecorder API
 const compressVideo = async (file: File, quality: number = 0.7, maxResolution: number = 1280): Promise<File> => {
@@ -209,6 +210,76 @@ const uploadViaProxy = async (
   return response.json();
 };
 
+// Upload via Vercel Blob (fast upload with progress tracking)
+const uploadVideoViaBlob = async (
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<BackendUploadResponse> => {
+  console.log("📤 Uploading to Vercel Blob...");
+
+  try {
+    // STEP 1: Upload to Vercel Blob
+    const blob = await upload(file.name, file, {
+      access: "public",
+      handleUploadUrl: "/api/upload-blob",
+      onUploadProgress: (progress) => {
+        const percentage = Math.round(progress.percentage);
+        console.log(`Upload progress: ${percentage}%`);
+        if (onProgress) {
+          onProgress(percentage);
+        }
+      },
+    });
+
+    console.log("✅ Upload complete! Blob URL:", blob.url);
+
+    // STEP 2: Send Blob URL to Modal API
+    console.log("🚀 Starting video processing...");
+    const formData = new FormData();
+    formData.append("video_url", blob.url);
+    formData.append("filename", file.name);
+    formData.append("generate_video", "true");
+
+    const response = await fetch(`${MODAL_API_URL}/api/process-from-url`, {
+      method: "POST",
+      body: formData,
+      signal: AbortSignal.timeout(30 * 60 * 1000), // 30 minutes timeout
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Modal API error:", errorText);
+
+      // Handle specific status codes with user-friendly messages
+      if (response.status === 500) {
+        throw new UploadError(
+          `Server error: ${response.statusText} - ${errorText}`,
+          500,
+          "A server error occurred. Please try again later."
+        );
+      } else if (response.status === 422) {
+        throw new UploadError(
+          `Validation error: ${response.statusText} - ${errorText}`,
+          422,
+          "There was a problem with the video file. Please try again."
+        );
+      } else {
+        throw new UploadError(
+          `API error: ${response.statusText} - ${errorText}`,
+          response.status,
+          `Upload failed: ${response.statusText}`
+        );
+      }
+    }
+
+    const result = await response.json();
+    console.log("✅ Processing started! Job ID:", result.job_id);
+    return result;
+  } catch (error) {
+    console.error("Blob upload error:", error);
+    throw error;
+  }
+};
 
 // Main upload function with optimizations
 export const uploadVideo = async (
@@ -243,8 +314,8 @@ export const uploadVideo = async (
       console.log(`Compression requested but file too small (${(file.size / 1024 / 1024).toFixed(1)}MB), uploading original`);
     }
 
-    // Upload via proxy (always use proxy to avoid CORS issues)
-    return await uploadViaProxy(fileToUpload, onProgress);
+    // Upload via Vercel Blob (fast upload with progress tracking)
+    return await uploadVideoViaBlob(fileToUpload, onProgress);
 
   } catch (error) {
     console.error("Upload error:", error);

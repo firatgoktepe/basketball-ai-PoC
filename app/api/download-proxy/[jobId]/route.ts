@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = (
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
-).replace(/\/$/, "");
+const MODAL_API_URL =
+  process.env.NEXT_PUBLIC_MODAL_API_URL ||
+  "https://feanor77ist--basketball-gpu-final-fastapi-app.modal.run";
 
 export async function GET(
     request: NextRequest,
@@ -12,8 +12,8 @@ export async function GET(
         const { jobId } = await params;
         console.log("Proxy: Forwarding download request for job:", jobId);
 
-        // Forward to backend
-        const response = await fetch(`${BACKEND_URL}/api/download/${jobId}`, {
+        // Forward to Modal API
+        const response = await fetch(`${MODAL_API_URL}/api/download/${jobId}`, {
             method: "GET",
             // Add timeout for large video downloads
             signal: AbortSignal.timeout(30 * 60 * 1000), // 30 minutes timeout
