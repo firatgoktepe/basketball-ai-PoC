@@ -49,7 +49,9 @@ export function GameSummary({ gameData }: GameSummaryProps) {
               <span className="text-sm text-muted-foreground">
                 Total Points
               </span>
-              <span className="text-2xl font-bold">{summary.points}</span>
+              <span className="text-2xl font-bold">
+                {summary.twoPointScores}
+              </span>
             </div>
 
             {/* Score Breakdown */}
@@ -66,9 +68,7 @@ export function GameSummary({ gameData }: GameSummaryProps) {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">3-Point:</span>
-                  <span className="font-semibold text-orange-600">
-                    {summary.threePointScores}
-                  </span>
+                  <span className="font-semibold text-orange-600">-</span>
                 </div>
               </div>
             </div>
