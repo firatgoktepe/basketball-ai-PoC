@@ -38,9 +38,10 @@ export interface BackendUploadResponse {
 }
 
 // API configuration
-const MODAL_API_URL =
+const MODAL_API_URL = (
   process.env.NEXT_PUBLIC_MODAL_API_URL ||
-  "https://feanor77ist--basketball-gpu-final-fastapi-app.modal.run";
+  "https://feanor77ist--basketball-gpu-final-fastapi-app.modal.run"
+).replace(/\/$/, ""); // Remove trailing slash
 
 // Debug: Log the backend URL being used
 console.log("Modal API URL:", MODAL_API_URL);
@@ -235,12 +236,23 @@ const uploadVideoViaBlob = async (
 
     // STEP 2: Send Blob URL to Modal API
     console.log("🚀 Starting video processing...");
+    console.log("Modal API URL:", MODAL_API_URL);
+    console.log("Blob URL:", blob.url);
+    console.log("Filename:", file.name);
+
     const formData = new FormData();
     formData.append("video_url", blob.url);
     formData.append("filename", file.name);
     formData.append("generate_video", "true");
 
-    const response = await fetch(`${MODAL_API_URL}/api/process-from-url`, {
+    const requestUrl = `${MODAL_API_URL}/api/process-from-url`;
+    console.log("Request URL:", requestUrl);
+    console.log("FormData entries:");
+    for (const [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
+
+    const response = await fetch(requestUrl, {
       method: "POST",
       body: formData,
       signal: AbortSignal.timeout(30 * 60 * 1000), // 30 minutes timeout
