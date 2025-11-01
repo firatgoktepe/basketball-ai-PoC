@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const MODAL_API_URL =
+const MODAL_API_URL = (
   process.env.NEXT_PUBLIC_MODAL_API_URL ||
-  "https://feanor77ist--basketball-gpu-final-fastapi-app.modal.run";
+  "https://feanor77ist--basketball-gpu-final-fastapi-app.modal.run"
+).replace(/\/$/, ""); // Remove trailing slash
 
 export async function GET(
   request: NextRequest,
@@ -34,9 +35,8 @@ export async function GET(
     console.error("Status proxy error:", error);
     return NextResponse.json(
       {
-        error: `Status proxy error: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        error: `Status proxy error: ${error instanceof Error ? error.message : String(error)
+          }`,
       },
       { status: 500 }
     );

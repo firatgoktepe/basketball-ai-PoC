@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const MODAL_API_URL =
-  process.env.NEXT_PUBLIC_MODAL_API_URL ||
-  "https://feanor77ist--basketball-gpu-final-fastapi-app.modal.run";
+const MODAL_API_URL = (
+    process.env.NEXT_PUBLIC_MODAL_API_URL ||
+    "https://feanor77ist--basketball-gpu-final-fastapi-app.modal.run"
+).replace(/\/$/, ""); // Remove trailing slash
 
 export async function GET(
     request: NextRequest,
